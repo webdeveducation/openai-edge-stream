@@ -1,0 +1,27 @@
+{
+  "name": "openai-edge-stream",
+  "version": "1.0.0",
+  "description": "",
+  "main": "dist/cjs/index.js",
+  "module": "dist/es/index.js",
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "start": "rollup -c -w",
+    "clean": "rm -rf dist",
+    "build": "npm run clean && rollup -c",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "rollup": "^3.20.2",
+    "rollup-plugin-typescript2": "^0.34.1"
+  },
+  "dependencies": {
+    "eventsource-parser": "^1.0.0",
+    "typescript": "^5.0.4"
+  }
+}
