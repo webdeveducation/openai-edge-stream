@@ -1,5 +1,13 @@
 {
   "compilerOptions": {
-    "lib": [ "es2017", "dom" ]
-  }
+    "strict": true,
+    "lib": [ "es2017", "dom" ],
+    "declaration": true,
+    "esModuleInterop": true,
+    "target": "es6",
+    "module": "es6",
+    "moduleResolution": "node",
+    "skipLibCheck": true
+  },
+  "include": ["src"],
 }
