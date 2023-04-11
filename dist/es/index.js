@@ -56,13 +56,6 @@ function OpenAIEdgeStream(url, init, options) {
                 var _a, e_1, _b, _c;
                 return __awaiter(this, void 0, void 0, function* () {
                     let fullContent = '';
-                    const emit = (msg) => __awaiter(this, void 0, void 0, function* () {
-                        const queue = encoder.encode(msg);
-                        controller.enqueue(queue);
-                    });
-                    if (options === null || options === void 0 ? void 0 : options.onStreamStart) {
-                        yield options.onStreamStart({ emit });
-                    }
                     // callback
                     function onParse(event) {
                         var _a;
@@ -71,9 +64,6 @@ function OpenAIEdgeStream(url, init, options) {
                                 const data = event.data;
                                 // https://beta.openai.com/docs/api-reference/completions/create#completions/create-stream
                                 if (data === ((options === null || options === void 0 ? void 0 : options.terminationMessage) || '[DONE]')) {
-                                    if (options === null || options === void 0 ? void 0 : options.onStreamEnd) {
-                                        yield options.onStreamEnd({ emit, fullContent });
-                                    }
                                     controller.close();
                                     return;
                                 }
