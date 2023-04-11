@@ -55,6 +55,7 @@ function OpenAIEdgeStream(url, init, options) {
             start(controller) {
                 var _a, e_1, _b, _c;
                 return __awaiter(this, void 0, void 0, function* () {
+                    let fullContent = '';
                     const emit = (msg) => __awaiter(this, void 0, void 0, function* () {
                         const queue = encoder.encode(msg);
                         controller.enqueue(queue);
@@ -71,7 +72,7 @@ function OpenAIEdgeStream(url, init, options) {
                                 // https://beta.openai.com/docs/api-reference/completions/create#completions/create-stream
                                 if (data === ((options === null || options === void 0 ? void 0 : options.terminationMessage) || '[DONE]')) {
                                     if (options === null || options === void 0 ? void 0 : options.onStreamEnd) {
-                                        yield options.onStreamEnd({ emit });
+                                        yield options.onStreamEnd({ emit, fullContent });
                                     }
                                     controller.close();
                                     return;
@@ -85,6 +86,7 @@ function OpenAIEdgeStream(url, init, options) {
                                         const json = JSON.parse(data);
                                         text = ((_a = json.choices[0].delta) === null || _a === void 0 ? void 0 : _a.content) || '';
                                     }
+                                    fullContent = fullContent + text;
                                     if (counter < 2 && (text.match(/\n/) || []).length) {
                                         // this is a prefix character (i.e., "\n\n"), do nothing
                                         return;

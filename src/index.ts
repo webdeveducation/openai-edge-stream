@@ -4,16 +4,6 @@ export async function OpenAIEdgeStream(
   url: RequestInfo,
   init: RequestInit,
   options?: {
-    onStreamStart?: ({
-      emit,
-    }: {
-      emit: (msg: string) => void;
-    }) => Promise<void> | void;
-    onStreamEnd?: ({
-      emit,
-    }: {
-      emit: (msg: string) => void;
-    }) => Promise<void> | void;
     terminationMessage?: string;
     textToEmit?: (data: string) => string;
   }
@@ -27,14 +17,11 @@ export async function OpenAIEdgeStream(
 
   const stream = new ReadableStream({
     async start(controller) {
+      let fullContent = '';
       const emit = async (msg: string) => {
         const queue = encoder.encode(msg);
         controller.enqueue(queue);
       };
-
-      if (options?.onStreamStart) {
-        await options.onStreamStart({ emit });
-      }
 
       // callback
       async function onParse(event: any) {
@@ -42,9 +29,6 @@ export async function OpenAIEdgeStream(
           const data = event.data;
           // https://beta.openai.com/docs/api-reference/completions/create#completions/create-stream
           if (data === (options?.terminationMessage || '[DONE]')) {
-            if (options?.onStreamEnd) {
-              await options.onStreamEnd({ emit });
-            }
             controller.close();
             return;
           }
@@ -56,6 +40,8 @@ export async function OpenAIEdgeStream(
               const json = JSON.parse(data);
               text = json.choices[0].delta?.content || '';
             }
+
+            fullContent = fullContent + text;
 
             if (counter < 2 && (text.match(/\n/) || []).length) {
               // this is a prefix character (i.e., "\n\n"), do nothing
