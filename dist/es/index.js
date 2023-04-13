@@ -45,6 +45,48 @@ function __asyncValues(o) {
     function settle(resolve, reject, d, v) { Promise.resolve(v).then(function(v) { resolve({ value: v, done: d }); }, reject); }
 }
 
+function streamReader(data, onMessageReceived) {
+    return __awaiter(this, void 0, void 0, function* () {
+        // make sure the data is a ReadableStream
+        if (!data) {
+            return;
+        }
+        const reader = data.getReader();
+        const decoder = new TextDecoder();
+        let done = false;
+        let tempValue = '';
+        while (!done) {
+            const { value, done: doneReading } = yield reader.read();
+            done = doneReading;
+            const chunkValue = decoder.decode(value);
+            const chunkPieces = chunkValue.split('\n');
+            for (let chunkPiece of chunkPieces) {
+                if (chunkPiece) {
+                    if (tempValue) {
+                        chunkPiece = tempValue + chunkPiece;
+                        tempValue = '';
+                    }
+                    // match json string and extract it from the chunk
+                    const match = chunkPiece.match(/\{(.*?)\}/);
+                    if (match) {
+                        tempValue = chunkPiece.replace(match[0], '');
+                        chunkPiece = match[0];
+                    }
+                    try {
+                        const parsed = JSON.parse(chunkPiece);
+                        onMessageReceived({
+                            event: parsed.e || 'event',
+                            content: decodeURI(parsed.c),
+                        });
+                    }
+                    catch (e) {
+                        tempValue = chunkPiece;
+                    }
+                }
+            }
+        }
+    });
+}
 function OpenAIEdgeStream(url, init, options) {
     return __awaiter(this, void 0, void 0, function* () {
         const encoder = new TextEncoder();
@@ -144,5 +186,5 @@ function OpenAIEdgeStream(url, init, options) {
     });
 }
 
-export { OpenAIEdgeStream };
+export { OpenAIEdgeStream, streamReader };
 //# sourceMappingURL=index.js.map

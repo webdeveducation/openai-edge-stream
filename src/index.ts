@@ -1,5 +1,52 @@
 import { createParser } from 'eventsource-parser';
 
+export async function streamReader(
+  data: ReadableStream<Uint8Array>,
+  onMessageReceived: (message: { event: string; content: string }) => void
+) {
+  // make sure the data is a ReadableStream
+  if (!data) {
+    return;
+  }
+
+  const reader = data.getReader();
+  const decoder = new TextDecoder();
+  let done = false;
+  let tempValue = '';
+
+  while (!done) {
+    const { value, done: doneReading } = await reader.read();
+    done = doneReading;
+    const chunkValue = decoder.decode(value);
+    const chunkPieces = chunkValue.split('\n');
+    for (let chunkPiece of chunkPieces) {
+      if (chunkPiece) {
+        if (tempValue) {
+          chunkPiece = tempValue + chunkPiece;
+          tempValue = '';
+        }
+
+        // match json string and extract it from the chunk
+        const match = chunkPiece.match(/\{(.*?)\}/);
+        if (match) {
+          tempValue = chunkPiece.replace(match[0], '');
+          chunkPiece = match[0];
+        }
+
+        try {
+          const parsed = JSON.parse(chunkPiece);
+          onMessageReceived({
+            event: parsed.e || 'event',
+            content: decodeURI(parsed.c),
+          });
+        } catch (e) {
+          tempValue = chunkPiece;
+        }
+      }
+    }
+  }
+}
+
 export async function OpenAIEdgeStream(
   url: RequestInfo,
   init: RequestInit,

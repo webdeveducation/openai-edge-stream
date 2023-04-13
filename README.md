@@ -78,30 +78,102 @@ const handleSendMessage = () => {
     method: "POST",
   });
 
-  // make sure the data is a ReadableStream
-  const data = response.body;
-  if (!data) {
-    return;
-  }
-
-  const reader = data.getReader();
-  const decoder = new TextDecoder();
-  let done = false;
   let content = "";
 
-  while (!done) {
-    const { value, done: doneReading } = await reader.read();
-    done = doneReading;
-    const chunkValue = decoder.decode(value);
-    content = content + chunkValue;
-    console.log("CHUNK VALUE: ", chunkValue);
+  /*
+  the second argument to streamReader is the callback for every
+  complete message chunk received, in the following structure:
+  {
+    event: string,
+    content: string
   }
+  event defaults to "event", but will also be the eventId if
+  any custom events that are emitted using the OpenAIEdgeStream's
+  onBeforeStream or onAfterStream emit function (reference below)
+  */
+  await streamReader(response.body, (message) => {
+    content = content + message.content;
+  });
 
   console.log("CONTENT: ", content);
 }
 ```
 
 ## Advanced usage
+
+### onBeforeStream
+
+If you need to perform any logic or emit a custom message before streaming begins, then you can use the `onBeforeStream` function:
+
+```js
+const stream = await OpenAIEdgeStream(
+  'https://api.openai.com/v1/chat/completions',
+  {
+    headers: {
+      'content-type': 'application/json',
+      Authorization: `Bearer ${process.env.OPENAI_KEY}`,
+    },
+    method: 'POST',
+    body: JSON.stringify({
+      model: 'gpt-3.5-turbo',
+      stream: true,
+      messages: [{ role: 'user', content: 'Tell me 5 interesting facts' }],
+    }),
+  },
+  {
+    onBeforeStream: ({ emit }) => {
+      /*
+        emit takes 2 arguments, the message to emit (required)
+        and the eventId to assign to this message (optional).
+        The eventId can be grabbed in the streamReader as shown in
+        the second code snippet below
+      */
+      emit('my custom message', 'customMessageEvent');
+    },
+  }
+);
+```
+
+```js
+await streamReader(response.body, (message) => {
+  if (message.event === 'customMessageEvent') {
+    console.log(message.content); // my custom message
+  } else {
+    content = content + message.content;
+  }
+});
+```
+
+### onAfterStream
+
+If you need to perform any logic or emit a custom message after streaming has finished, but before the stream closes, then you can use the `onAfterStream` function:
+
+```js
+const stream = await OpenAIEdgeStream(
+  'https://api.openai.com/v1/chat/completions',
+  {
+    headers: {
+      'content-type': 'application/json',
+      Authorization: `Bearer ${process.env.OPENAI_KEY}`,
+    },
+    method: 'POST',
+    body: JSON.stringify({
+      model: 'gpt-3.5-turbo',
+      stream: true,
+      messages: [{ role: 'user', content: 'Tell me 5 interesting facts' }],
+    }),
+  },
+  {
+    onAfterStream: ({ emit, fullContent }) => {
+      /*
+        emit is the same as onBeforeStream.
+        fullContent contains the entire content that was received
+        from OpenAI. This is ideal if needed to persist to a db etc.
+      */
+    },
+  }
+);
+```
 
 ### Overriding the default `terminationMessage`:
 
