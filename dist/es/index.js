@@ -60,7 +60,19 @@ function OpenAIEdgeStream(url, init, options) {
                     function onParse(event) {
                         var _a;
                         return __awaiter(this, void 0, void 0, function* () {
-                            if (event.type === 'event') {
+                            if (event.event === 'emit') {
+                                try {
+                                    const data = event.data;
+                                    const json = JSON.parse(data);
+                                    const text = json.message;
+                                    const queue = encoder.encode(`{"e": "${json.eventId}", "c": "${btoa(text)}"}\n`);
+                                    controller.enqueue(queue);
+                                }
+                                catch (e) {
+                                    console.log('ERROR IN CUSTOM EMIT: ', e);
+                                }
+                            }
+                            else if (event.type === 'event') {
                                 const data = event.data;
                                 // https://beta.openai.com/docs/api-reference/completions/create#completions/create-stream
                                 if (data === ((options === null || options === void 0 ? void 0 : options.terminationMessage) || '[DONE]')) {
@@ -81,7 +93,7 @@ function OpenAIEdgeStream(url, init, options) {
                                         // this is a prefix character (i.e., "\n\n"), do nothing
                                         return;
                                     }
-                                    const queue = encoder.encode(text);
+                                    const queue = encoder.encode(`{"c": "${btoa(text)}"}\n`);
                                     controller.enqueue(queue);
                                     counter++;
                                 }
@@ -95,6 +107,12 @@ function OpenAIEdgeStream(url, init, options) {
                     // stream response (SSE) from OpenAI may be fragmented into multiple chunks
                     // this ensures we properly read chunks and invoke an event for each SSE event stream
                     const parser = createParser(onParse);
+                    const emit = (msg, eventId) => {
+                        parser.feed(`event: emit\ndata: {"eventId": "${eventId}", "message": "${msg}"}\n\n`);
+                    };
+                    if (options === null || options === void 0 ? void 0 : options.onBeforeStream) {
+                        yield options.onBeforeStream({ emit });
+                    }
                     try {
                         // https://web.dev/streams/#asynchronous-iteration
                         for (var _d = true, _e = __asyncValues(res.body), _f; _f = yield _e.next(), _a = _f.done, !_a;) {
@@ -115,6 +133,9 @@ function OpenAIEdgeStream(url, init, options) {
                             if (!_d && !_a && (_b = _e.return)) yield _b.call(_e);
                         }
                         finally { if (e_1) throw e_1.error; }
+                    }
+                    if (options === null || options === void 0 ? void 0 : options.onAfterStream) {
+                        yield options.onAfterStream({ emit, fullContent });
                     }
                 });
             },
