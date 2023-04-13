@@ -86,6 +86,15 @@ const handleSendMessage = async () => {
 
   let content = '';
 
+  const data = response.body;
+
+  // make sure the data is a ReadableStream
+  if (!data) {
+    return;
+  }
+
+  reader = data.getReader();
+
   /*
   the second argument to streamReader is the callback for every
   complete message chunk received, in the following structure:
@@ -97,7 +106,7 @@ const handleSendMessage = async () => {
   any custom events that are emitted using the OpenAIEdgeStream's
   onBeforeStream or onAfterStream emit function (reference below)
   */
-  await streamReader(response.body, (message) => {
+  await streamReader(reader, (message) => {
     content = content + message.content;
   });
 
@@ -141,7 +150,7 @@ const stream = await OpenAIEdgeStream(
 ```
 
 ```js
-await streamReader(response.body, (message) => {
+await streamReader(reader, (message) => {
   if (message.event === 'customMessageEvent') {
     console.log(message.content); // my custom message
   } else {
