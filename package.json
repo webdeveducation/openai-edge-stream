@@ -4,6 +4,12 @@
   "description": "",
   "main": "dist/cjs/index.js",
   "module": "dist/es/index.js",
+  "keywords": [
+    "openai",
+    "edge functions",
+    "steaming",
+    "openai-edge-stream"
+  ],
   "homepage": "https://github.com/webdeveducation/openai-edge-stream#readme",
   "files": [
     "dist",
