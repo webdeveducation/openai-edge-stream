@@ -93,7 +93,7 @@ const handleSendMessage = async () => {
     return;
   }
 
-  reader = data.getReader();
+  const reader = data.getReader();
 
   /*
   the second argument to streamReader is the callback for every
