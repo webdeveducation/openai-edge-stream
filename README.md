@@ -8,12 +8,14 @@ Use it like you would with `fetch`:
 
 ```js
 // api/chat/sendMessage.js
-export default function handler(req, res){
+import { OpenAIEdgeStream } from 'openai-edge-stream';
+
+export default async function handler(req, res) {
   // set appropriate headers for streaming
   res.status(200);
-  res.setHeader("Content-Type", "text/event-stream;charset=utf-8");
-  res.setHeader("Cache-Control", "no-cache, no-transform");
-  res.setHeader("X-Accel-Buffering", "no");
+  res.setHeader('Content-Type', 'text/event-stream;charset=utf-8');
+  res.setHeader('Cache-Control', 'no-cache, no-transform');
+  res.setHeader('X-Accel-Buffering', 'no');
 
   const stream = await OpenAIEdgeStream(
     'https://api.openai.com/v1/chat/completions',
@@ -42,11 +44,13 @@ export default function handler(req, res){
 
 ```js
 // api/chat/sendMessage.js
+import { OpenAIEdgeStream } from 'openai-edge-stream';
+
 export const config = {
   runtime: 'edge',
-}
+};
 
-export default function handler(req){
+export default async function handler(req) {
   const stream = await OpenAIEdgeStream(
     'https://api.openai.com/v1/chat/completions',
     {
@@ -70,15 +74,17 @@ export default function handler(req){
 ### Then on the front end:
 
 ```js
-const handleSendMessage = () => {
+import { streamReader } from 'openai-edge-stream';
+
+const handleSendMessage = async () => {
   const response = await fetch(`/api/chat/sendMessage`, {
     headers: {
-      "content-type": "application/json",
+      'content-type': 'application/json',
     },
-    method: "POST",
+    method: 'POST',
   });
 
-  let content = "";
+  let content = '';
 
   /*
   the second argument to streamReader is the callback for every
@@ -95,8 +101,8 @@ const handleSendMessage = () => {
     content = content + message.content;
   });
 
-  console.log("CONTENT: ", content);
-}
+  console.log('CONTENT: ', content);
+};
 ```
 
 ## Advanced usage
