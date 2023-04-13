@@ -1,6 +1,6 @@
 {
   "name": "openai-edge-stream",
-  "version": "1.1.2",
+  "version": "1.2.0",
   "description": "",
   "main": "dist/cjs/index.js",
   "module": "dist/es/index.js",
