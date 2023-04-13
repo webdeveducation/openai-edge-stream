@@ -118,6 +118,15 @@ function OpenAIEdgeStream(url, init, options) {
                                 const data = event.data;
                                 // https://beta.openai.com/docs/api-reference/completions/create#completions/create-stream
                                 if (data === ((options === null || options === void 0 ? void 0 : options.terminationMessage) || '[DONE]')) {
+                                    if (options === null || options === void 0 ? void 0 : options.onAfterStream) {
+                                        yield options.onAfterStream({
+                                            emit: (msg, eventId = '') => {
+                                                const queue = encoder.encode(`{"e": "${eventId}", "c": "${encodeURI(msg)}"}\n`);
+                                                controller.enqueue(queue);
+                                            },
+                                            fullContent,
+                                        });
+                                    }
                                     controller.close();
                                     return;
                                 }
@@ -175,9 +184,6 @@ function OpenAIEdgeStream(url, init, options) {
                             if (!_d && !_a && (_b = _e.return)) yield _b.call(_e);
                         }
                         finally { if (e_1) throw e_1.error; }
-                    }
-                    if (options === null || options === void 0 ? void 0 : options.onAfterStream) {
-                        yield options.onAfterStream({ emit, fullContent });
                     }
                 });
             },

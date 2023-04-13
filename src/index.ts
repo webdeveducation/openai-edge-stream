@@ -91,6 +91,17 @@ export async function OpenAIEdgeStream(
           const data = event.data;
           // https://beta.openai.com/docs/api-reference/completions/create#completions/create-stream
           if (data === (options?.terminationMessage || '[DONE]')) {
+            if (options?.onAfterStream) {
+              await options.onAfterStream({
+                emit: (msg, eventId = '') => {
+                  const queue = encoder.encode(
+                    `{"e": "${eventId}", "c": "${encodeURI(msg)}"}\n`
+                  );
+                  controller.enqueue(queue);
+                },
+                fullContent,
+              });
+            }
             controller.close();
             return;
           }
@@ -136,10 +147,6 @@ export async function OpenAIEdgeStream(
       // https://web.dev/streams/#asynchronous-iteration
       for await (const chunk of res.body as any) {
         parser.feed(decoder.decode(chunk));
-      }
-
-      if (options?.onAfterStream) {
-        await options.onAfterStream({ emit, fullContent });
       }
     },
   });
