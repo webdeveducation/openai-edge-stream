@@ -45,13 +45,8 @@ function __asyncValues(o) {
     function settle(resolve, reject, d, v) { Promise.resolve(v).then(function(v) { resolve({ value: v, done: d }); }, reject); }
 }
 
-function streamReader(data, onMessageReceived) {
+function streamReader(reader, onMessageReceived) {
     return __awaiter(this, void 0, void 0, function* () {
-        // make sure the data is a ReadableStream
-        if (!data) {
-            return;
-        }
-        const reader = data.getReader();
         const decoder = new TextDecoder();
         let done = false;
         let tempValue = '';

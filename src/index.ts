@@ -1,15 +1,9 @@
 import { createParser } from 'eventsource-parser';
 
 export async function streamReader(
-  data: ReadableStream<Uint8Array>,
+  reader: ReadableStreamDefaultReader<Uint8Array>,
   onMessageReceived: (message: { event: string; content: string }) => void
 ) {
-  // make sure the data is a ReadableStream
-  if (!data) {
-    return;
-  }
-
-  const reader = data.getReader();
   const decoder = new TextDecoder();
   let done = false;
   let tempValue = '';

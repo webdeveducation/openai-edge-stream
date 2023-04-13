@@ -1,4 +1,4 @@
-export declare function streamReader(data: ReadableStream<Uint8Array>, onMessageReceived: (message: {
+export declare function streamReader(reader: ReadableStreamDefaultReader<Uint8Array>, onMessageReceived: (message: {
     event: string;
     content: string;
 }) => void): Promise<void>;
