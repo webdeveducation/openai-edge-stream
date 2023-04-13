@@ -34,7 +34,7 @@ export async function OpenAIEdgeStream(
             const json = JSON.parse(data);
             const text = json.message;
             const queue = encoder.encode(
-              `{"e": "${json.eventId}", "c": "${btoa(text)}"}\n`
+              `{"e": "${json.eventId}", "c": "${encodeURI(text)}"}\n`
             );
             controller.enqueue(queue);
           } catch (e) {
@@ -62,7 +62,7 @@ export async function OpenAIEdgeStream(
               // this is a prefix character (i.e., "\n\n"), do nothing
               return;
             }
-            const queue = encoder.encode(`{"c": "${btoa(text)}"}\n`);
+            const queue = encoder.encode(`{"c": "${encodeURI(text)}"}\n`);
             controller.enqueue(queue);
             counter++;
           } catch (e) {
